@@ -16,6 +16,9 @@ class DomainsView(View):
         visited_links = json.loads(request.body)
         links = visited_links.get("links", [])
 
-        self.add_visited_links_use_case.execute(links=links, current_time=current_time)
+        result = self.add_visited_links_use_case.execute(links=links, current_time=current_time)
+
+        if not result:
+            return JsonResponse({"status": "fail"})
 
         return JsonResponse({"status": "ok"})

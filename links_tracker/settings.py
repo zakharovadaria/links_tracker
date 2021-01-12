@@ -120,4 +120,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-REDIS_URL = os.environ.get("REDIS_URL")
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+TEST_REDIS_URL = os.environ.get("TEST_REDIS_URL", "redis://localhost:6379/1")
+

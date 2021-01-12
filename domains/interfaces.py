@@ -4,5 +4,5 @@ from typing import List
 
 class IDomainsDAO(ABC):
     @abstractmethod
-    def add_links(self, links: List[str], current_time: float) -> int:
+    def add_domains(self, domains: List[str], current_time: float) -> bool:
         pass

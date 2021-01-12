@@ -1,17 +1,24 @@
 import json
 from typing import List
 
-from redis import StrictRedis
+from redis import Redis, ResponseError
 
 from domains.interfaces import IDomainsDAO
 
 
 class RedisDomainsDAO(IDomainsDAO):
-    def __init__(self, redis_url: str):
-        self._redis = StrictRedis.from_url(url=redis_url)
+    def __init__(self, redis: Redis):
+        self._redis = redis
 
-    def add_links(self, links: List[str], current_time: float) -> int:
-        links_list_str = json.dumps(links)
-        count_links = self._redis.zadd("domains_set", {links_list_str: current_time})
+    def add_domains(self, domains: List[str], current_time: float) -> bool:
+        if not domains:
+            return False
 
-        return count_links
+        domains_list_str = json.dumps(domains)
+
+        try:
+            self._redis.zadd("domains_set", {domains_list_str: current_time})
+        except ResponseError as e:
+            return False
+
+        return True
