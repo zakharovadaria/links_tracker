@@ -22,3 +22,13 @@ class RedisDomainsDAO(IDomainsDAO):
             return False
 
         return True
+
+    def get_domains(self, from_timestamp: int, to_timestamp: int) -> List[str]:
+        result: List[bytes] = self._redis.zrangebyscore("domains_set", to_timestamp, from_timestamp)
+        domains_set = set()
+
+        for row in result:
+            domains_list = json.loads(row.decode("utf-8"))
+            domains_set = domains_set.union(set(domains_list))
+
+        return list(domains_set)

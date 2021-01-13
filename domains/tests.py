@@ -11,7 +11,7 @@ from domains.use_cases import AddVisitedLinksUseCase
 
 class RedisTestCase(TestCase):
     def __init__(self, *args, **kwargs):
-        self.redis = Redis.from_url(settings.TEST_REDIS_URL)
+        self.redis = Redis.from_url(settings.REDIS_URL)
         self.redis.flushall()
         super().__init__(*args, **kwargs)
 
@@ -61,7 +61,7 @@ class UseCaseTestCase(TestCase):
         ], current_time=current_time)
 
 
-class ViewsTestCase(TestCase):
+class ViewsTestCase(RedisTestCase):
     def setUp(self) -> None:
         self.client = Client()
 
@@ -79,3 +79,28 @@ class ViewsTestCase(TestCase):
 
         self.assertEqual(result.status_code, 200)
         self.assertEqual(json_result, {"status": "ok"})
+
+    def test_get(self):
+        self.redis.zadd("domains_set", {
+            json.dumps([
+                "ya.ru",
+                "ya.ru",
+                "funbox.ru",
+                "stackoverflow.com",
+            ]): 1545221230,
+            json.dumps([
+                "ya.ru",
+                "ya.ru",
+                "stackoverflow.com",
+            ]): 1545221229,
+        })
+
+        result = self.client.get("/visited_domains?from=1545221231&to=1545217638")
+
+        json_result = result.json()
+
+        self.assertEqual(json_result["status"], "ok")
+        self.assertEqual(len(json_result["domains"]), 3)
+        self.assertIn("ya.ru", json_result["domains"])
+        self.assertIn("stackoverflow.com", json_result["domains"])
+        self.assertIn("funbox.ru", json_result["domains"])
