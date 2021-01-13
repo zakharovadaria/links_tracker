@@ -1,14 +1,18 @@
-from typing import List, Optional
+from typing import List, Set
 from urllib.parse import urlparse
 
 from domains.interfaces import IDomainsDAO
 
 
 class AddVisitedLinksUseCase:
+
+    class AddVisitedLinksError(Exception):
+        pass
+
     def __init__(self, domains_dao: IDomainsDAO):
         self.domains_dao = domains_dao
 
-    def execute(self, links: List[str], current_time: float) -> bool:
+    def execute(self, links: List[str], current_time: float) -> None:
         domains = list()
 
         for link in links:
@@ -19,41 +23,26 @@ class AddVisitedLinksUseCase:
             if not domain:
                 domain = parse_result.path
 
-            domains.append(domain)
+            if domain not in domains:
+                domains.append(domain)
 
-        return self.domains_dao.add_unique_domains(domains=domains, current_time=current_time)
+        try:
+            self.domains_dao.add_domains(domains=domains, current_time=current_time)
+        except self.domains_dao.AddDataError:
+            raise self.AddVisitedLinksError
 
 
-class GetVisitedDomainsUseCase:
-    class FromTimestampDoesNotExist(Exception):
-        pass
+class GetUniqueVisitedDomainsUseCase:
 
-    class ToTimestampDoesNotExit(Exception):
-        pass
-
-    class FromTimestampNotNumber(Exception):
-        pass
-
-    class ToTimestampNotNumber(Exception):
+    class GetVisitedDomainsError(Exception):
         pass
 
     def __init__(self, domains_dao: IDomainsDAO):
         self.domains_dao = domains_dao
 
-    def execute(self, from_timestamp: Optional[str], to_timestamp: Optional[str]):
-        if not from_timestamp:
-            raise self.FromTimestampDoesNotExist()
-        if not to_timestamp:
-            raise self.ToTimestampDoesNotExit()
-
+    def execute(self, from_timestamp: int, to_timestamp: int) -> Set[str]:
         try:
-            num_from_timestamp = int(from_timestamp)
-        except ValueError:
-            raise self.FromTimestampNotNumber()
-
-        try:
-            num_to_timestamp = int(to_timestamp)
-        except ValueError:
-            raise self.ToTimestampNotNumber()
-
-        return self.domains_dao.get_unique_domains(from_timestamp=num_from_timestamp, to_timestamp=num_to_timestamp)
+            domains = self.domains_dao.get_domains(from_timestamp=to_timestamp, to_timestamp=from_timestamp)
+            return set(domains)
+        except self.domains_dao.GetDataError:
+            raise self.GetVisitedDomainsError

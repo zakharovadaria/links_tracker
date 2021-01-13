@@ -9,6 +9,7 @@ services:
       - "8000:8000"
     environment:
         REDIS_URL: "redis://:pass@redis:6379/0"
+        TEST_REDIS_URL: "redis://:pass@test_redis:6379/0"
     depends_on:
       - redis
 
@@ -17,5 +18,9 @@ services:
     volumes:
       - ./data/redis:/data
     command: redis-server --requirepass pass
-    ports:
-      - "6379:6379"
+
+  test_redis:
+    image: "redis:alpine"
+    volumes:
+      - ./data/test_redis:/data
+    command: redis-server --requirepass pass

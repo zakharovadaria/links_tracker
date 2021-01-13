@@ -1,3 +1,16 @@
+# Run project
+#### For build and up project use:
+    make start
+#### For start tests in docker container use:
+    python runtests.py
+#### For build docker image run:
+    make build
+#### For up docker container run:
+    make up
+#### For down docker container run:
+    make down
+
+
 # Задание:
 Реализуйте web-приложение для простого учета посещенных ссылок.
 Приложение должно удовлетворять следующим требованиям.

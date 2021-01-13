@@ -7,28 +7,29 @@ from domains.interfaces import IDomainsDAO
 
 
 class RedisDomainsDAO(IDomainsDAO):
+
     def __init__(self, redis: Redis):
         self._redis = redis
+        self.set_name = "domains_set"
 
-    def add_domains(self, domains: List[str], current_time: float) -> bool:
-        if not domains:
-            return False
-
+    def add_domains(self, domains: List[str], current_time: float):
         domains_list_str = json.dumps(domains)
 
         try:
-            self._redis.zadd("domains_set", {domains_list_str: current_time})
-        except ResponseError as e:
-            return False
-
-        return True
+            self._redis.zadd(self.set_name, {domains_list_str: current_time})
+        except ResponseError:
+            raise self.AddDataError
 
     def get_domains(self, from_timestamp: int, to_timestamp: int) -> List[str]:
-        result: List[bytes] = self._redis.zrangebyscore("domains_set", to_timestamp, from_timestamp)
-        domains_set = set()
+        try:
+            result: List[bytes] = self._redis.zrangebyscore(self.set_name, from_timestamp, to_timestamp)
+        except ResponseError:
+            raise self.GetDataError
+
+        domains_list = []
 
         for row in result:
-            domains_list = json.loads(row.decode("utf-8"))
-            domains_set = domains_set.union(set(domains_list))
+            row_domains_list = json.loads(row.decode("utf-8"))
+            domains_list.extend(row_domains_list)
 
-        return list(domains_set)
+        return domains_list

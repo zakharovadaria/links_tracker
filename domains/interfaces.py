@@ -3,8 +3,18 @@ from typing import List
 
 
 class IDomainsDAO(ABC):
+
+    class BaseDomainException(Exception):
+        pass
+
+    class AddDataError(BaseDomainException):
+        pass
+
+    class GetDataError(BaseDomainException):
+        pass
+
     @abstractmethod
-    def add_domains(self, domains: List[str], current_time: float) -> bool:
+    def add_domains(self, domains: List[str], current_time: float) -> None:
         pass
 
     @abstractmethod
